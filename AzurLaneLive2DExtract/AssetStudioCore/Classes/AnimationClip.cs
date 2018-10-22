@@ -71,7 +71,7 @@ namespace AssetStudioCore.Classes
         }
     }
 
-    public class PackedBitVector
+    public class PackedFloatVector
     {
         public uint m_NumItems { get; set; }
         public float m_Range { get; set; }
@@ -79,7 +79,7 @@ namespace AssetStudioCore.Classes
         public byte[] m_Data { get; set; }
         public byte m_BitSize { get; set; }
 
-        public PackedBitVector(EndianBinaryReader reader)
+        public PackedFloatVector(EndianBinaryReader reader)
         {
             m_NumItems = reader.ReadUInt32();
             m_Range = reader.ReadSingle();
@@ -92,15 +92,53 @@ namespace AssetStudioCore.Classes
             m_BitSize = reader.ReadByte();
             reader.AlignStream(4);
         }
+
+        public float[] UnpackFloats(int itemCountInChunk, int chunkStride, int start = 0, int numChunks = -1)
+        {
+            int bitPos = m_BitSize * start;
+            int indexPos = bitPos / 8;
+            bitPos %= 8;
+
+            float scale = 1.0f / m_Range;
+            if (numChunks == -1)
+                numChunks = (int)m_NumItems / itemCountInChunk;
+            var end = chunkStride * numChunks / 4;
+            var data = new List<float>();
+            for (var index = 0; index != end; index += chunkStride / 4)
+            {
+                for (int i = 0; i < itemCountInChunk; ++i)
+                {
+                    uint x = 0;
+
+                    int bits = 0;
+                    while (bits < m_BitSize)
+                    {
+                        x |= (uint)((m_Data[indexPos] >> bitPos) << bits);
+                        int num = Math.Min(m_BitSize - bits, 8 - bitPos);
+                        bitPos += num;
+                        bits += num;
+                        if (bitPos == 8)
+                        {
+                            indexPos++;
+                            bitPos = 0;
+                        }
+                    }
+                    x &= (uint)(1 << m_BitSize) - 1u;
+                    data.Add(x / (scale * ((1 << m_BitSize) - 1)) + m_Start);
+                }
+            }
+
+            return data.ToArray();
+        }
     }
 
-    public class PackedBitVector2
+    public class PackedIntVector
     {
         public uint m_NumItems { get; set; }
         public byte[] m_Data { get; set; }
         public byte m_BitSize { get; set; }
 
-        public PackedBitVector2(EndianBinaryReader reader)
+        public PackedIntVector(EndianBinaryReader reader)
         {
             m_NumItems = reader.ReadUInt32();
 
@@ -111,14 +149,40 @@ namespace AssetStudioCore.Classes
             m_BitSize = reader.ReadByte();
             reader.AlignStream(4);
         }
+
+        public int[] UnpackInts()
+        {
+            var data = new int[m_NumItems];
+            int indexPos = 0;
+            int bitPos = 0;
+            for (int i = 0; i < m_NumItems; i++)
+            {
+                int bits = 0;
+                data[i] = 0;
+                while (bits < m_BitSize)
+                {
+                    data[i] |= (m_Data[indexPos] >> bitPos) << bits;
+                    int num = Math.Min(m_BitSize - bits, 8 - bitPos);
+                    bitPos += num;
+                    bits += num;
+                    if (bitPos == 8)
+                    {
+                        indexPos++;
+                        bitPos = 0;
+                    }
+                }
+                data[i] &= (1 << m_BitSize) - 1;
+            }
+            return data;
+        }
     }
 
-    public class PackedBitVector3
+    public class PackedQuatVector
     {
         public uint m_NumItems { get; set; }
         public byte[] m_Data { get; set; }
 
-        public PackedBitVector3(EndianBinaryReader reader)
+        public PackedQuatVector(EndianBinaryReader reader)
         {
             m_NumItems = reader.ReadUInt32();
 
@@ -127,23 +191,87 @@ namespace AssetStudioCore.Classes
 
             reader.AlignStream(4);
         }
+
+        public Quaternion[] UnpackQuats()
+        {
+            var data = new Quaternion[m_NumItems];
+            int indexPos = 0;
+            int bitPos = 0;
+
+            for (int i = 0; i < m_NumItems; i++)
+            {
+                uint flags = 0;
+
+                int bits = 0;
+                while (bits < 3)
+                {
+                    flags |= (uint)((m_Data[indexPos] >> bitPos) << bits);
+                    int num = Math.Min(3 - bits, 8 - bitPos);
+                    bitPos += num;
+                    bits += num;
+                    if (bitPos == 8)
+                    {
+                        indexPos++;
+                        bitPos = 0;
+                    }
+                }
+                flags &= 7;
+
+
+                var q = new Quaternion();
+                float sum = 0;
+                for (int j = 0; j < 4; j++)
+                {
+                    if ((flags & 3) != j)
+                    {
+                        int bitSize = ((flags & 3) + 1) % 4 == j ? 9 : 10;
+                        uint x = 0;
+
+                        bits = 0;
+                        while (bits < bitSize)
+                        {
+                            x |= (uint)((m_Data[indexPos] >> bitPos) << bits);
+                            int num = Math.Min(bitSize - bits, 8 - bitPos);
+                            bitPos += num;
+                            bits += num;
+                            if (bitPos == 8)
+                            {
+                                indexPos++;
+                                bitPos = 0;
+                            }
+                        }
+                        x &= (uint)((1 << bitSize) - 1);
+                        q[j] = x / (0.5f * ((1 << bitSize) - 1)) - 1;
+                        sum += q[j] * q[j];
+                    }
+                }
+
+                int lastComponent = (int)(flags & 3);
+                q[lastComponent] = (float)Math.Sqrt(1 - sum);
+                if ((flags & 4) != 0u)
+                    q[lastComponent] = -q[lastComponent];
+                data[i] = q;
+            }
+
+            return data;
+        }
     }
 
     public class CompressedAnimationCurve
     {
         public string m_Path { get; set; }
-        public PackedBitVector2 m_Times { get; set; }
-        public PackedBitVector3 m_Values { get; set; }
-        public PackedBitVector m_Slopes { get; set; }
+        public PackedIntVector m_Times { get; set; }
+        public PackedQuatVector m_Values { get; set; }
+        public PackedFloatVector m_Slopes { get; set; }
         public int m_PreInfinity { get; set; }
         public int m_PostInfinity { get; set; }
 
         public CompressedAnimationCurve(EndianBinaryReader reader)
         {
             m_Path = reader.ReadAlignedString();
-            m_Times = new PackedBitVector2(reader);
-            m_Values = new PackedBitVector3(reader);
-            m_Slopes = new PackedBitVector(reader);
+            m_Times = new PackedIntVector(reader);
+            m_Values = new PackedQuatVector(reader);
+            m_Slopes = new PackedFloatVector(reader);
             m_PreInfinity = reader.ReadInt32();
             m_PostInfinity = reader.ReadInt32();
         }
@@ -349,13 +477,35 @@ namespace AssetStudioCore.Classes
         public class StreamedCurveKey
         {
             public int index { get; set; }
-            public Vector3 tcb { get; set; }
-            public float value { get; set; }
+            public float[] coeff { get; set; }
+
+            public float value;
+            public float outSlope;
+            public float inSlope;
+
             public StreamedCurveKey(BinaryReader reader)
             {
                 index = reader.ReadInt32();
-                tcb = reader.ReadVector3();
-                value = reader.ReadSingle();
+                coeff = reader.ReadSingleArray(4);
+
+                outSlope = coeff[2];
+                value = coeff[3];
+            }
+
+            public float CalculateNextInSlope(float dx, StreamedCurveKey rhs)
+            {
+                //Stepped
+                if (coeff[0] == 0f && coeff[1] == 0f && coeff[2] == 0f)
+                {
+                    return float.PositiveInfinity;
+                }
+
+                dx = Math.Max(dx, 0.0001f);
+                var dy = rhs.value - value;
+                var length = 1.0f / (dx * dx);
+                var d1 = outSlope * dx;
+                var d2 = dy + dy + dy - d1 - d1 - coeff[1] / length;
+                return d2 / dx;
             }
         }
 
@@ -379,7 +529,7 @@ namespace AssetStudioCore.Classes
 
         public List<StreamedFrame> ReadData()
         {
-            List<StreamedFrame> frameList = new List<StreamedFrame>();
+            var frameList = new List<StreamedFrame>();
             using (Stream stream = new MemoryStream())
             {
                 BinaryWriter writer = new BinaryWriter(stream);
@@ -388,6 +538,24 @@ namespace AssetStudioCore.Classes
                 while (stream.Position < stream.Length)
                 {
                     frameList.Add(new StreamedFrame(new BinaryReader(stream)));
+                }
+            }
+
+            for (int frameIndex = 2; frameIndex < frameList.Count - 1; frameIndex++)
+            {
+                var frame = frameList[frameIndex];
+                foreach (var curveKey in frame.keyList)
+                {
+                    for (int i = frameIndex - 1; i >= 0; i--)
+                    {
+                        var preFrame = frameList[i];
+                        var preCurveKey = preFrame.keyList.Find(x => x.index == curveKey.index);
+                        if (preCurveKey != null)
+                        {
+                            curveKey.inSlope = preCurveKey.CalculateNextInSlope(frame.time - preFrame.time, curveKey);
+                            break;
+                        }
+                    }
                 }
             }
             return frameList;
@@ -470,7 +638,10 @@ namespace AssetStudioCore.Classes
         {
             m_StreamedClip = new StreamedClip(reader);
             m_DenseClip = new DenseClip(reader);
-            m_ConstantClip = new ConstantClip(reader);
+            if (version[0] > 4 || (version[0] == 4 && version[1] >= 3)) //4.3 and up
+            {
+                m_ConstantClip = new ConstantClip(reader);
+            }
             m_Binding = new ValueArrayConstant(reader, version);
         }
     }
@@ -545,7 +716,15 @@ namespace AssetStudioCore.Classes
 
             int numIndices = reader.ReadInt32();
             m_IndexArray = reader.ReadInt32Array(numIndices);
-
+            if (version[0] < 4 || (version[0] == 4 && version[1] < 3)) //4.3 down
+            {
+                int numAdditionalCurveIndexs = reader.ReadInt32();
+                var m_AdditionalCurveIndexArray = new List<int>(numAdditionalCurveIndexs);
+                for (int i = 0; i < numAdditionalCurveIndexs; i++)
+                {
+                    m_AdditionalCurveIndexArray.Add(reader.ReadInt32());
+                }
+            }
             int numDeltas = reader.ReadInt32();
             m_ValueArrayDelta = new List<ValueDelta>(numDeltas);
             for (int i = 0; i < numDeltas; i++)
@@ -644,9 +823,16 @@ namespace AssetStudioCore.Classes
         }
     }
 
-    public class AnimationClip : NamedObject
+    public enum AnimationType
     {
-        public int m_AnimationType { get; set; }
+        kLegacy = 1,
+        kGeneric = 2,
+        kHumanoid = 3
+    };
+
+    public sealed class AnimationClip : NamedObject
+    {
+        public AnimationType m_AnimationType { get; set; }
         public bool m_Legacy { get; set; }
         public bool m_Compressed { get; set; }
         public bool m_UseHighQualityCurve { get; set; }
@@ -674,8 +860,8 @@ namespace AssetStudioCore.Classes
             }
             else if (version[0] >= 4)//4.0 and up
             {
-                m_AnimationType = reader.ReadInt32();
-                if (m_AnimationType == 1)
+                m_AnimationType = (AnimationType)reader.ReadInt32();
+                if (m_AnimationType == AnimationType.kLegacy)
                     m_Legacy = true;
             }
             else

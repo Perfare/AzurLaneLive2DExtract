@@ -31,11 +31,15 @@ namespace AzurLaneLive2DExtract
     {
         public float time { get; set; }
         public T value { get; set; }
+        public T inSlope { get; set; }
+        public T outSlope { get; set; }
 
-        public ImportedKeyframe(float time, T value)
+        public ImportedKeyframe(float time, T value, T inSlope, T outSlope)
         {
             this.time = time;
             this.value = value;
+            this.inSlope = inSlope;
+            this.outSlope = outSlope;
         }
     }
 

@@ -99,12 +99,20 @@ namespace AzurLaneLive2DExtract
                         for (var j = 1; j < track.Curve.Count; j++)
                         {
                             var curve = track.Curve[j];
-                            if (curve != null)
+                            if (curve.inSlope == float.PositiveInfinity && curve.outSlope == 0) //SteppedSegment
+                            {
+                                json.Curves[i].Segments.Add(2f);
+                                json.Curves[i].Segments.Add(curve.time);
+                                json.Curves[i].Segments.Add(curve.value);
+                            }
+                            else //LinearSegment
                             {
                                 json.Curves[i].Segments.Add(0f);
                                 json.Curves[i].Segments.Add(curve.time);
                                 json.Curves[i].Segments.Add(curve.value);
                             }
+                            //TODO BezierSegment
+                            //TODO InverseSteppedSegment
                         }
                     }
                     motions.Add($"motions/{animation.Name}.motion3.json");

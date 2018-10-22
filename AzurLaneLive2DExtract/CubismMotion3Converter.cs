@@ -34,10 +34,9 @@ namespace AzurLaneLive2DExtract
                 for (int frameIndex = 1; frameIndex < streamedFrames.Count - 1; frameIndex++)
                 {
                     var frame = streamedFrames[frameIndex];
-                    var streamedValues = frame.keyList.Select(x => x.value).ToArray();
-                    for (int curveIndex = 0; curveIndex < frame.keyList.Count;)
+                    for (int curveIndex = 0; curveIndex < frame.keyList.Count; curveIndex++)
                     {
-                        ReadCurveData(iAnim, m_ClipBindingConstant, frame.keyList[curveIndex].index, frame.time, streamedValues, 0, ref curveIndex);
+                        ReadStreamedData(iAnim, m_ClipBindingConstant, frame.time, frame.keyList[curveIndex]);
                     }
                 }
                 var m_DenseClip = m_Clip.m_DenseClip;
@@ -67,6 +66,20 @@ namespace AzurLaneLive2DExtract
             }
         }
 
+        private void ReadStreamedData(ImportedKeyframedAnimation iAnim, AnimationClipBindingConstant m_ClipBindingConstant, float time, StreamedClip.StreamedCurveKey curveKey)
+        {
+            var binding = m_ClipBindingConstant.FindBinding(curveKey.index);
+            if (binding.path == 0)
+            {
+                return;
+            }
+
+            GetLive2dPath(binding.path, out var target, out var boneName);
+            var track = iAnim.FindTrack(boneName);
+            track.Target = target;
+            track.Curve.Add(new ImportedKeyframe<float>(time, curveKey.value, curveKey.inSlope, curveKey.outSlope));
+        }
+
         private void ReadCurveData(ImportedKeyframedAnimation iAnim, AnimationClipBindingConstant m_ClipBindingConstant, int index, float time, float[] data, int offset, ref int curveIndex)
         {
             var binding = m_ClipBindingConstant.FindBinding(index);
@@ -79,12 +92,7 @@ namespace AzurLaneLive2DExtract
             GetLive2dPath(binding.path, out var target, out var boneName);
             var track = iAnim.FindTrack(boneName);
             track.Target = target;
-            switch (binding.attribute)
-            {
-                default:
-                    track.Curve.Add(new ImportedKeyframe<float>(time, data[curveIndex++]));
-                    break;
-            }
+            track.Curve.Add(new ImportedKeyframe<float>(time, data[curveIndex++], 0, 0));
         }
 
         private void GetLive2dPath(uint path, out string target, out string id)
