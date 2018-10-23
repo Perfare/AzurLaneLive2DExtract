@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace AzurLaneLive2DExtract
 {
@@ -13,15 +14,15 @@ namespace AzurLaneLive2DExtract
         public SerializableGroup[] Groups;
     }
 
-    public struct SerializableFileReferences
+    public class SerializableFileReferences
     {
         public string Moc;
         public string[] Textures;
-        public string[] Motions;
         public string Physics;
+        public JObject Motions;
     }
 
-    public struct SerializableGroup
+    public class SerializableGroup
     {
         public string Target;
         public string Name;

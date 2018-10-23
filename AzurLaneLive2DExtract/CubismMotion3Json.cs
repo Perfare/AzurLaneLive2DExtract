@@ -17,7 +17,6 @@ namespace AssetStudioCore
         public float Duration;
         public float Fps;
         public bool Loop;
-        public bool AreBeziersRestricted;
         public int CurveCount;
         public int TotalSegmentCount;
         public int TotalPointCount;

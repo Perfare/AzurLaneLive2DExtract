@@ -6,6 +6,7 @@ using System.Linq;
 using AssetStudioCore;
 using AssetStudioCore.Classes;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace AzurLaneLive2DExtract
 {
@@ -13,6 +14,8 @@ namespace AzurLaneLive2DExtract
     {
         static void Main(string[] args)
         {
+            if (args.Length == 0)
+                return;
             foreach (var arg in args)
             {
                 if (!File.Exists(arg))
@@ -78,15 +81,14 @@ namespace AzurLaneLive2DExtract
                             Duration = animation.Duration,
                             Fps = animation.SampleRate,
                             Loop = true,
-                            AreBeziersRestricted = true,
                             CurveCount = animation.TrackList.Count,
-                            TotalSegmentCount = 63, //TODO How to calculate this?
-                            TotalPointCount = 165, //TODO How to calculate this?
                             UserDataCount = 0,
                             TotalUserDataSize = 0
                         },
                         Curves = new SerializableCurve[animation.TrackList.Count]
                     };
+                    int totalSegmentCount = 0;
+                    int totalPointCount = 0;
                     for (int i = 0; i < animation.TrackList.Count; i++)
                     {
                         var track = animation.TrackList[i];
@@ -106,6 +108,8 @@ namespace AzurLaneLive2DExtract
                                 json.Curves[i].Segments.Add(2f);
                                 json.Curves[i].Segments.Add(curve.time);
                                 json.Curves[i].Segments.Add(curve.value);
+                                totalSegmentCount++;
+                                totalPointCount += 3;
                                 lastTime = curve.time;
                             }
                             else //LinearSegment
@@ -116,6 +120,8 @@ namespace AzurLaneLive2DExtract
                                     json.Curves[i].Segments.Add(0f);
                                     json.Curves[i].Segments.Add(t);
                                     json.Curves[i].Segments.Add(preCurve.Evaluate(t));
+                                    totalSegmentCount++;
+                                    totalPointCount += 3;
                                     lastTime = t;
                                 }
                             }
@@ -126,12 +132,28 @@ namespace AzurLaneLive2DExtract
                             json.Curves[i].Segments.Add(0f);
                             json.Curves[i].Segments.Add(lastCurve.time);
                             json.Curves[i].Segments.Add(lastCurve.value);
+                            totalSegmentCount++;
+                            totalPointCount += 3;
                         }
                     }
+
+                    json.Meta.TotalSegmentCount = totalSegmentCount;
+                    json.Meta.TotalPointCount = totalPointCount;
+
                     motions.Add($"motions/{animation.Name}.motion3.json");
                     File.WriteAllText($"{destAnimationPath}{animation.Name}.motion3.json", JsonConvert.SerializeObject(json, Formatting.Indented, new MyJsonConverter()));
                 }
                 //model
+                var job = new JObject();
+                var jarray = new JArray();
+                var tempjob = new JObject();
+                foreach (var motion in motions)
+                {
+                    tempjob["File"] = motion;
+                    jarray.Add(tempjob);
+                }
+                job[""] = jarray;
+
                 var model3 = new CubismModel3Json
                 {
                     Version = 3,
@@ -139,8 +161,8 @@ namespace AzurLaneLive2DExtract
                     {
                         Moc = $"{name}.moc3",
                         Textures = textures.ToArray(),
-                        Motions = motions.ToArray(),
-                        Physics = $"{physics.m_Name}.json"
+                        Physics = $"{physics.m_Name}.json",
+                        Motions = job
                     },
                     Groups = new[]
                     {
