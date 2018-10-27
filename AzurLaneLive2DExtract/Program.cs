@@ -87,8 +87,8 @@ namespace AzurLaneLive2DExtract
                         },
                         Curves = new SerializableCurve[animation.TrackList.Count]
                     };
-                    int totalSegmentCount = 0;
-                    int totalPointCount = 0;
+                    int totalSegmentCount = 1;
+                    int totalPointCount = 1;
                     for (int i = 0; i < animation.TrackList.Count; i++)
                     {
                         var track = animation.TrackList[i];
@@ -98,42 +98,39 @@ namespace AzurLaneLive2DExtract
                             Id = track.Name,
                             Segments = new List<float> { 0f, track.Curve[0].value }
                         };
-                        var lastTime = 0f;
                         for (var j = 1; j < track.Curve.Count; j++)
                         {
-                            var preCurve = track.Curve[j - 1];
                             var curve = track.Curve[j];
-                            if (preCurve.coeff[0] == 0f && preCurve.coeff[1] == 0f && preCurve.coeff[2] == 0f) //SteppedSegment
+                            if (track.Curve.Count == 2) //LinearSegment
                             {
-                                json.Curves[i].Segments.Add(2f);
+                                json.Curves[i].Segments.Add(0f);
                                 json.Curves[i].Segments.Add(curve.time);
                                 json.Curves[i].Segments.Add(curve.value);
-                                totalSegmentCount++;
-                                totalPointCount += 3;
-                                lastTime = curve.time;
                             }
-                            else //LinearSegment
+                            else
                             {
-                                var interval = (curve.time - preCurve.time) / 20;
-                                for (var t = preCurve.time + interval; t < curve.time; t += interval)
+                                var preCurve = track.Curve[j - 1];
+                                if (curve.inSlope == float.PositiveInfinity) //SteppedSegment
                                 {
-                                    json.Curves[i].Segments.Add(0f);
-                                    json.Curves[i].Segments.Add(t);
-                                    json.Curves[i].Segments.Add(preCurve.Evaluate(t));
-                                    totalSegmentCount++;
+                                    json.Curves[i].Segments.Add(2f);
+                                    json.Curves[i].Segments.Add(curve.time);
+                                    json.Curves[i].Segments.Add(curve.value);
+                                    totalPointCount += 1;
+                                }
+                                else //BezierSegment
+                                {
+                                    var tangentLength = (curve.time - preCurve.time) / 3f;
+                                    json.Curves[i].Segments.Add(1f);
+                                    json.Curves[i].Segments.Add(preCurve.time + tangentLength);
+                                    json.Curves[i].Segments.Add(preCurve.outSlope * tangentLength + preCurve.value);
+                                    json.Curves[i].Segments.Add(curve.time - tangentLength);
+                                    json.Curves[i].Segments.Add(curve.value - curve.inSlope * tangentLength);
+                                    json.Curves[i].Segments.Add(curve.time);
+                                    json.Curves[i].Segments.Add(curve.value);
                                     totalPointCount += 3;
-                                    lastTime = t;
                                 }
                             }
-                        }
-                        var lastCurve = track.Curve.Last();
-                        if (lastCurve.time > lastTime)
-                        {
-                            json.Curves[i].Segments.Add(0f);
-                            json.Curves[i].Segments.Add(lastCurve.time);
-                            json.Curves[i].Segments.Add(lastCurve.value);
                             totalSegmentCount++;
-                            totalPointCount += 3;
                         }
                     }
 

@@ -540,11 +540,6 @@ namespace AssetStudioCore.Classes
                     frameList.Add(new StreamedFrame(new BinaryReader(stream)));
                 }
             }
-            var firstFrame = frameList[1];
-            foreach (var curveKey in firstFrame.keyList)
-            {
-                curveKey.inSlope = curveKey.outSlope;
-            }
             for (int frameIndex = 2; frameIndex < frameList.Count - 1; frameIndex++)
             {
                 var frame = frameList[frameIndex];

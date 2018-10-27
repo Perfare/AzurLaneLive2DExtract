@@ -31,19 +31,15 @@ namespace AzurLaneLive2DExtract
     {
         public float time { get; set; }
         public T value { get; set; }
-        public float[] coeff { get; set; }
+        public T inSlope { get; set; }
+        public T outSlope { get; set; }
 
-        public ImportedKeyframe(float time, T value, float[] coeff)
+        public ImportedKeyframe(float time, T value, T inSlope, T outSlope)
         {
             this.time = time;
             this.value = value;
-            this.coeff = coeff;
-        }
-
-        public float Evaluate(float sampleTime)
-        {
-            float t = sampleTime - time;
-            return (t * (t * (t * coeff[0] + coeff[1]) + coeff[2])) + coeff[3];
+            this.inSlope = inSlope;
+            this.outSlope = outSlope;
         }
     }
 

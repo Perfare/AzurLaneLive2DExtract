@@ -77,7 +77,7 @@ namespace AzurLaneLive2DExtract
             GetLive2dPath(binding.path, out var target, out var boneName);
             var track = iAnim.FindTrack(boneName);
             track.Target = target;
-            track.Curve.Add(new ImportedKeyframe<float>(time, curveKey.value, curveKey.coeff));
+            track.Curve.Add(new ImportedKeyframe<float>(time, curveKey.value, curveKey.inSlope, curveKey.outSlope));
         }
 
         private void ReadCurveData(ImportedKeyframedAnimation iAnim, AnimationClipBindingConstant m_ClipBindingConstant, int index, float time, float[] data, int offset, ref int curveIndex)
@@ -93,7 +93,7 @@ namespace AzurLaneLive2DExtract
             var track = iAnim.FindTrack(boneName);
             track.Target = target;
             var value = data[curveIndex++];
-            track.Curve.Add(new ImportedKeyframe<float>(time, value, new[] { 0f, 0f, 0f, value }));
+            track.Curve.Add(new ImportedKeyframe<float>(time, value, 0, 0));
         }
 
         private void GetLive2dPath(uint path, out string target, out string id)
