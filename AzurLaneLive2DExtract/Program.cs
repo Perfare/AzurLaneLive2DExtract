@@ -111,13 +111,29 @@ namespace AzurLaneLive2DExtract
                             else
                             {
                                 var preCurve = track.Curve[j - 1];
-                                /*if (curve.time - preCurve.time == 0.01f) //InverseSteppedSegment
+                                if (Math.Abs(curve.time - preCurve.time - 0.01f) < 0.0001f) //InverseSteppedSegment
                                 {
-
-                                }*/
+                                    var nextCurve = track.Curve[j + 1];
+                                    if (nextCurve.value == curve.value)
+                                    {
+                                        json.Curves[i].Segments.Add(3f);
+                                        json.Curves[i].Segments.Add(nextCurve.time);
+                                        json.Curves[i].Segments.Add(nextCurve.value);
+                                        j += 1;
+                                        totalPointCount += 1;
+                                        continue;
+                                    }
+                                }
                                 if (curve.inSlope == float.PositiveInfinity) //SteppedSegment
                                 {
                                     json.Curves[i].Segments.Add(2f);
+                                    json.Curves[i].Segments.Add(curve.time);
+                                    json.Curves[i].Segments.Add(curve.value);
+                                    totalPointCount += 1;
+                                }
+                                else if (preCurve.outSlope == 0f && Math.Abs(curve.inSlope) < 0.0001f) //LinearSegment
+                                {
+                                    json.Curves[i].Segments.Add(0f);
                                     json.Curves[i].Segments.Add(curve.time);
                                     json.Curves[i].Segments.Add(curve.value);
                                     totalPointCount += 1;
