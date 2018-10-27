@@ -106,10 +106,15 @@ namespace AzurLaneLive2DExtract
                                 json.Curves[i].Segments.Add(0f);
                                 json.Curves[i].Segments.Add(curve.time);
                                 json.Curves[i].Segments.Add(curve.value);
+                                totalPointCount += 1;
                             }
                             else
                             {
                                 var preCurve = track.Curve[j - 1];
+                                /*if (curve.time - preCurve.time == 0.01f) //InverseSteppedSegment
+                                {
+
+                                }*/
                                 if (curve.inSlope == float.PositiveInfinity) //SteppedSegment
                                 {
                                     json.Curves[i].Segments.Add(2f);
