@@ -99,55 +99,46 @@ namespace AzurLaneLive2DExtract
                         for (var j = 1; j < track.Curve.Count; j++)
                         {
                             var curve = track.Curve[j];
-                            if (track.Curve.Count == 2) //LinearSegment
+                            var preCurve = track.Curve[j - 1];
+                            if (Math.Abs(curve.time - preCurve.time - 0.01f) < 0.0001f) //InverseSteppedSegment
+                            {
+                                var nextCurve = track.Curve[j + 1];
+                                if (nextCurve.value == curve.value)
+                                {
+                                    json.Curves[i].Segments.Add(3f);
+                                    json.Curves[i].Segments.Add(nextCurve.time);
+                                    json.Curves[i].Segments.Add(nextCurve.value);
+                                    j += 1;
+                                    totalPointCount += 1;
+                                    totalSegmentCount++;
+                                    continue;
+                                }
+                            }
+                            if (curve.inSlope == float.PositiveInfinity) //SteppedSegment
+                            {
+                                json.Curves[i].Segments.Add(2f);
+                                json.Curves[i].Segments.Add(curve.time);
+                                json.Curves[i].Segments.Add(curve.value);
+                                totalPointCount += 1;
+                            }
+                            else if (preCurve.outSlope == 0f && Math.Abs(curve.inSlope) < 0.0001f) //LinearSegment
                             {
                                 json.Curves[i].Segments.Add(0f);
                                 json.Curves[i].Segments.Add(curve.time);
                                 json.Curves[i].Segments.Add(curve.value);
                                 totalPointCount += 1;
                             }
-                            else
+                            else //BezierSegment
                             {
-                                var preCurve = track.Curve[j - 1];
-                                if (Math.Abs(curve.time - preCurve.time - 0.01f) < 0.0001f) //InverseSteppedSegment
-                                {
-                                    var nextCurve = track.Curve[j + 1];
-                                    if (nextCurve.value == curve.value)
-                                    {
-                                        json.Curves[i].Segments.Add(3f);
-                                        json.Curves[i].Segments.Add(nextCurve.time);
-                                        json.Curves[i].Segments.Add(nextCurve.value);
-                                        j += 1;
-                                        totalPointCount += 1;
-                                        continue;
-                                    }
-                                }
-                                if (curve.inSlope == float.PositiveInfinity) //SteppedSegment
-                                {
-                                    json.Curves[i].Segments.Add(2f);
-                                    json.Curves[i].Segments.Add(curve.time);
-                                    json.Curves[i].Segments.Add(curve.value);
-                                    totalPointCount += 1;
-                                }
-                                /*else if (preCurve.outSlope == 0f && Math.Abs(curve.inSlope) < 0.0001f) //LinearSegment
-                                {
-                                    json.Curves[i].Segments.Add(0f);
-                                    json.Curves[i].Segments.Add(curve.time);
-                                    json.Curves[i].Segments.Add(curve.value);
-                                    totalPointCount += 1;
-                                }*/
-                                else //BezierSegment
-                                {
-                                    var tangentLength = (curve.time - preCurve.time) / 3f;
-                                    json.Curves[i].Segments.Add(1f);
-                                    json.Curves[i].Segments.Add(preCurve.time + tangentLength);
-                                    json.Curves[i].Segments.Add(preCurve.outSlope * tangentLength + preCurve.value);
-                                    json.Curves[i].Segments.Add(curve.time - tangentLength);
-                                    json.Curves[i].Segments.Add(curve.value - curve.inSlope * tangentLength);
-                                    json.Curves[i].Segments.Add(curve.time);
-                                    json.Curves[i].Segments.Add(curve.value);
-                                    totalPointCount += 3;
-                                }
+                                var tangentLength = (curve.time - preCurve.time) / 3f;
+                                json.Curves[i].Segments.Add(1f);
+                                json.Curves[i].Segments.Add(preCurve.time + tangentLength);
+                                json.Curves[i].Segments.Add(preCurve.outSlope * tangentLength + preCurve.value);
+                                json.Curves[i].Segments.Add(curve.time - tangentLength);
+                                json.Curves[i].Segments.Add(curve.value - curve.inSlope * tangentLength);
+                                json.Curves[i].Segments.Add(curve.time);
+                                json.Curves[i].Segments.Add(curve.value);
+                                totalPointCount += 3;
                             }
                             totalSegmentCount++;
                         }
