@@ -80,7 +80,7 @@ namespace AzurLaneLive2DExtract
                             Fps = animation.SampleRate,
                             Loop = true,
                             CurveCount = animation.TrackList.Count,
-                            UserDataCount = 0,
+                            UserDataCount = animation.Events.Count,
                             TotalUserDataSize = 0
                         },
                         Curves = new SerializableCurve[animation.TrackList.Count]
@@ -142,6 +142,17 @@ namespace AzurLaneLive2DExtract
                             }
                             totalSegmentCount++;
                         }
+                    }
+
+                    json.UserData = new SerializableUserData[animation.Events.Count];
+                    for (var i = 0; i < animation.Events.Count; i++)
+                    {
+                        var @event = animation.Events[i];
+                        json.UserData[i] = new SerializableUserData
+                        {
+                            Time = @event.time,
+                            Value = @event.value,
+                        };
                     }
 
                     json.Meta.TotalSegmentCount = totalSegmentCount;

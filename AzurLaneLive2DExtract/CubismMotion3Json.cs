@@ -10,6 +10,7 @@ namespace AzurLaneLive2DExtract
         public int Version;
         public SerializableMeta Meta;
         public SerializableCurve[] Curves;
+        public SerializableUserData[] UserData;
     }
 
     public class SerializableMeta
@@ -30,4 +31,10 @@ namespace AzurLaneLive2DExtract
         public string Id;
         public List<float> Segments;
     };
+
+    public class SerializableUserData
+    {
+        public float Time;
+        public string Value;
+    }
 }

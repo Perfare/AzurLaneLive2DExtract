@@ -62,6 +62,14 @@ namespace AzurLaneLive2DExtract
                     }
                     time2 = animationClip.m_MuscleClip.m_StopTime;
                 }
+                foreach (var m_Event in animationClip.m_Events)
+                {
+                    iAnim.Events.Add(new ImportedEvent
+                    {
+                        time = m_Event.time,
+                        value = m_Event.data
+                    });
+                }
             }
         }
 

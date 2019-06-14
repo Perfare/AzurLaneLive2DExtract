@@ -9,6 +9,7 @@ namespace AzurLaneLive2DExtract
         public float Duration { get; set; }
 
         public List<ImportedAnimationKeyframedTrack> TrackList { get; set; } = new List<ImportedAnimationKeyframedTrack>();
+        public List<ImportedEvent> Events = new List<ImportedEvent>();
 
         public ImportedAnimationKeyframedTrack FindTrack(string name)
         {
@@ -43,5 +44,11 @@ namespace AzurLaneLive2DExtract
         public string Name { get; set; }
         public string Target { get; set; }
         public List<ImportedKeyframe<float>> Curve = new List<ImportedKeyframe<float>>();
+    }
+
+    public class ImportedEvent
+    {
+        public float time { get; set; }
+        public string value { get; set; }
     }
 }
