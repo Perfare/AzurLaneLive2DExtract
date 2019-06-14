@@ -1011,22 +1011,22 @@ namespace AssetStudio
 
     internal static class NativeMethods
     {
-        [DllImport("PVRTexLibWrapper.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"Libraries\PVRTexLibWrapper.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool DecompressPVR(byte[] data, IntPtr image);
 
-        [DllImport("TextureConverterWrapper.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"Libraries\TextureConverterWrapper.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool Ponvert(byte[] data, int dataSize, int width, int height, int type, bool fixAlpha, IntPtr image);
 
-        [DllImport("crunch.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"Libraries\crunch.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool DecompressCRN(byte[] data, int dataSize, out IntPtr uncompressedData, out int uncompressedSize);
 
-        [DllImport("crunchunity.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"Libraries\crunchunity.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool DecompressUnityCRN(byte[] data, int dataSize, out IntPtr uncompressedData, out int uncompressedSize);
 
-        [DllImport("texgenpack.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"Libraries\texgenpack.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void TexgenPackDecode(byte[] data, int textureType, int width, int height, IntPtr image);
 
-        [DllImport("astc.dll", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport(@"Libraries\astc.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool DecodeASTC(byte[] data, int width, int height, int blockwidth, int blockheight, IntPtr image);
     }
 
