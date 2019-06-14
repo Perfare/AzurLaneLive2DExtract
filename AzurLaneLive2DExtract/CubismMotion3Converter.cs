@@ -68,12 +68,7 @@ namespace AzurLaneLive2DExtract
         private void ReadStreamedData(ImportedKeyframedAnimation iAnim, AnimationClipBindingConstant m_ClipBindingConstant, float time, StreamedClip.StreamedCurveKey curveKey)
         {
             var binding = m_ClipBindingConstant.FindBinding(curveKey.index);
-            if (binding.path == 0)
-            {
-                return;
-            }
-
-            GetLive2dPath(binding.path, out var target, out var boneName);
+            GetLive2dPath(binding, out var target, out var boneName);
             var track = iAnim.FindTrack(boneName);
             track.Target = target;
             track.Curve.Add(new ImportedKeyframe<float>(time, curveKey.value, curveKey.inSlope, curveKey.outSlope));
@@ -82,21 +77,16 @@ namespace AzurLaneLive2DExtract
         private void ReadCurveData(ImportedKeyframedAnimation iAnim, AnimationClipBindingConstant m_ClipBindingConstant, int index, float time, float[] data, int offset, ref int curveIndex)
         {
             var binding = m_ClipBindingConstant.FindBinding(index);
-            if (binding.path == 0)
-            {
-                curveIndex++;
-                return;
-            }
-
-            GetLive2dPath(binding.path, out var target, out var boneName);
+            GetLive2dPath(binding, out var target, out var boneName);
             var track = iAnim.FindTrack(boneName);
             track.Target = target;
             var value = data[curveIndex++];
             track.Curve.Add(new ImportedKeyframe<float>(time, value, 0, 0));
         }
 
-        private void GetLive2dPath(uint path, out string target, out string id)
+        private void GetLive2dPath(GenericBinding binding, out string target, out string id)
         {
+            var path = binding.path;
             id = path.ToString();
             target = path.ToString();
             if (bonePathHash.TryGetValue(path, out var boneName))
@@ -111,6 +101,25 @@ namespace AzurLaneLive2DExtract
                 else if (target == "Parts")
                 {
                     target = "PartOpacity";
+                }
+            }
+            else
+            {
+                binding.script.TryGet(out MonoScript script);
+                switch (script.m_ClassName)
+                {
+                    case "CubismRenderController":
+                        target = "Model";
+                        id = "Opacity";
+                        break;
+                    case "CubismEyeBlinkController":
+                        target = "Model";
+                        id = "EyeBlink";
+                        break;
+                    case "CubismMouthController":
+                        target = "Model";
+                        id = "LipSync";
+                        break;
                 }
             }
         }
