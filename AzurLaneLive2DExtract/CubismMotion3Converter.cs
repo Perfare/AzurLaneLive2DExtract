@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using AssetStudioCore;
-using AssetStudioCore.Classes;
+using AssetStudio;
 
 namespace AzurLaneLive2DExtract
 {
@@ -34,7 +33,7 @@ namespace AzurLaneLive2DExtract
                 for (int frameIndex = 1; frameIndex < streamedFrames.Count - 1; frameIndex++)
                 {
                     var frame = streamedFrames[frameIndex];
-                    for (int curveIndex = 0; curveIndex < frame.keyList.Count; curveIndex++)
+                    for (int curveIndex = 0; curveIndex < frame.keyList.Length; curveIndex++)
                     {
                         ReadStreamedData(iAnim, m_ClipBindingConstant, frame.time, frame.keyList[curveIndex]);
                     }
@@ -118,12 +117,11 @@ namespace AzurLaneLive2DExtract
 
         private Transform GetTransform(GameObject gameObject)
         {
-            foreach (var m_Component in gameObject.m_Component)
+            foreach (var m_Component in gameObject.m_Components)
             {
-                var asset = m_Component.Get();
-                if (asset.Type == ClassIDReference.Transform)
+                if (m_Component.TryGet(out Transform m_Transform))
                 {
-                    return new Transform(asset);
+                    return m_Transform;
                 }
             }
 
@@ -148,17 +146,17 @@ namespace AzurLaneLive2DExtract
             }
             foreach (var pptr in m_Transform.m_Children)
             {
-                CreateBonePathHash(new Transform(pptr.Get()));
+                if (pptr.TryGet(out var child))
+                    CreateBonePathHash(child);
             }
         }
 
-        private string GetTransformPath(Transform meshTransform)
+        private string GetTransformPath(Transform transform)
         {
-            var m_GameObject = new GameObject(meshTransform.m_GameObject.Get());
-            if (meshTransform.m_Father.TryGet(out var father))
+            transform.m_GameObject.TryGet(out var m_GameObject);
+            if (transform.m_Father.TryGet(out var father))
             {
-                var transform = new Transform(father);
-                return GetTransformPath(transform) + "/" + m_GameObject.m_Name;
+                return GetTransformPath(father) + "/" + m_GameObject.m_Name;
             }
 
             return m_GameObject.m_Name;

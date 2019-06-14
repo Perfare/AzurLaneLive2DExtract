@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using AssetStudioCore;
-using AssetStudioCore.Classes;
+using AssetStudio;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -21,13 +20,13 @@ namespace AzurLaneLive2DExtract
                 if (!File.Exists(arg))
                     continue;
                 var path = Path.GetFullPath(arg);
-                var bundleFile = new BundleFile(path, new EndianBinaryReader(File.OpenRead(path)));
-                if (bundleFile.fileList.Count == 0)
+                var assetsManager = new AssetsManager();
+                assetsManager.LoadFiles(path);
+                if (assetsManager.assetsFileList.Count == 0)
                 {
-                    return;
+                    continue;
                 }
-                var assetsFile = new AssetsFile(path, new EndianBinaryReader(bundleFile.fileList[0].stream));
-                var assets = assetsFile.preloadTable.Select(x => x.Value).ToArray();
+                var assets = assetsManager.assetsFileList[0].Objects.Values.ToList();
                 var name = Path.GetFileName(path);
                 var destPath = @"live2d\" + name + @"\";
                 var destTexturePath = @"live2d\" + name + @"\textures\";
@@ -37,27 +36,27 @@ namespace AzurLaneLive2DExtract
                 Directory.CreateDirectory(destAnimationPath);
                 Console.WriteLine($"Extract {name}");
                 //physics
-                var physics = new TextAsset(assets.First(x => x.Type == ClassIDReference.TextAsset));
+                var physics = (TextAsset)(assets.First(x => x is TextAsset));
                 File.WriteAllBytes($"{destPath}{physics.m_Name}.json", physics.m_Script);
                 //moc
-                var moc = assets.First(x => x.Type == ClassIDReference.MonoBehaviour);
-                foreach (var assetPreloadData in assets.Where(x => x.Type == ClassIDReference.MonoBehaviour))
+                var moc = assets.First(x => x is MonoBehaviour);
+                foreach (var assetPreloadData in assets.Where(x => x is MonoBehaviour))
                 {
-                    if (assetPreloadData.Size > moc.Size)
+                    if (assetPreloadData.byteSize > moc.byteSize)
                     {
                         moc = assetPreloadData;
                     }
                 }
-                var mocReader = moc.InitReader();
+                var mocReader = moc.reader;
+                mocReader.Reset();
                 mocReader.Position += 28;
                 mocReader.ReadAlignedString();
                 var mocBuff = mocReader.ReadBytes(mocReader.ReadInt32());
                 File.WriteAllBytes($"{destPath}{name}.moc3", mocBuff);
                 //texture
                 var textures = new SortedSet<string>();
-                foreach (var texture in assets.Where(x => x.Type == ClassIDReference.Texture2D))
+                foreach (var texture2D in assets.OfType<Texture2D>())
                 {
-                    var texture2D = new Texture2D(texture);
                     using (var bitmap = new Texture2DConverter(texture2D).ConvertToBitmap(true))
                     {
                         textures.Add($"textures/{texture2D.m_Name}.png");
@@ -66,10 +65,9 @@ namespace AzurLaneLive2DExtract
                 }
                 //motions
                 var motions = new List<string>();
-                var animatorAsset = assets.First(x => x.Type == ClassIDReference.Animator);
-                var animator = new Animator(animatorAsset);
-                var rootGameObject = new GameObject(animator.m_GameObject.Get());
-                var animations = assets.Where(x => x.Type == ClassIDReference.AnimationClip).Select(x => new AnimationClip(x)).ToArray();
+                var animator = (Animator)assets.First(x => x is Animator);
+                var animations = assets.OfType<AnimationClip>().ToArray();
+                animator.m_GameObject.TryGet(out GameObject rootGameObject);
                 var converter = new CubismMotion3Converter(rootGameObject, animations);
                 foreach (ImportedKeyframedAnimation animation in converter.AnimationList)
                 {

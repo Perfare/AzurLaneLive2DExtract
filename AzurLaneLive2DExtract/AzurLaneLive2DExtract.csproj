@@ -32,11 +32,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="AssetStudio, Version=0.12.64.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libraries\AssetStudio.dll</HintPath>
     </Reference>
-    <Reference Include="SharpDX.Mathematics, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
-      <HintPath>..\packages\SharpDX.Mathematics.4.2.0\lib\net45\SharpDX.Mathematics.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -49,46 +50,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="7zip\Common\CommandLineParser.cs" />
-    <Compile Include="7zip\Common\CRC.cs" />
-    <Compile Include="7zip\Common\InBuffer.cs" />
-    <Compile Include="7zip\Common\OutBuffer.cs" />
-    <Compile Include="7zip\Compress\LZMA\LzmaBase.cs" />
-    <Compile Include="7zip\Compress\LZMA\LzmaDecoder.cs" />
-    <Compile Include="7zip\Compress\LZMA\LzmaEncoder.cs" />
-    <Compile Include="7zip\Compress\LZ\IMatchFinder.cs" />
-    <Compile Include="7zip\Compress\LZ\LzBinTree.cs" />
-    <Compile Include="7zip\Compress\LZ\LzInWindow.cs" />
-    <Compile Include="7zip\Compress\LZ\LzOutWindow.cs" />
-    <Compile Include="7zip\Compress\RangeCoder\RangeCoder.cs" />
-    <Compile Include="7zip\Compress\RangeCoder\RangeCoderBit.cs" />
-    <Compile Include="7zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
-    <Compile Include="7zip\ICoder.cs" />
-    <Compile Include="AssetStudioCore\AssetPreloadData.cs" />
-    <Compile Include="AssetStudioCore\AssetsFile.cs" />
-    <Compile Include="AssetStudioCore\BinaryReaderExtensions.cs" />
-    <Compile Include="AssetStudioCore\BinaryWriterExtensions.cs" />
-    <Compile Include="AssetStudioCore\BuildTarget.cs" />
-    <Compile Include="AssetStudioCore\BundleFile.cs" />
-    <Compile Include="AssetStudioCore\Classes\AnimationClip.cs" />
-    <Compile Include="AssetStudioCore\Classes\Animator.cs" />
-    <Compile Include="AssetStudioCore\Classes\Behaviour.cs" />
-    <Compile Include="AssetStudioCore\Classes\Component.cs" />
-    <Compile Include="AssetStudioCore\Classes\EditorExtension.cs" />
-    <Compile Include="AssetStudioCore\Classes\GameObject.cs" />
-    <Compile Include="AssetStudioCore\Classes\NamedObject.cs" />
-    <Compile Include="AssetStudioCore\Classes\Object.cs" />
-    <Compile Include="AssetStudioCore\Classes\TextAsset.cs" />
-    <Compile Include="AssetStudioCore\Classes\Texture.cs" />
-    <Compile Include="AssetStudioCore\Classes\Texture2D.cs" />
-    <Compile Include="AssetStudioCore\Classes\Transform.cs" />
-    <Compile Include="AssetStudioCore\ClassIDReference.cs" />
-    <Compile Include="AssetStudioCore\EndianBinaryReader.cs" />
-    <Compile Include="AssetStudioCore\Lz4DecoderStream.cs" />
-    <Compile Include="AssetStudioCore\PPtrHelpers.cs" />
-    <Compile Include="AssetStudioCore\SevenZipHelper.cs" />
-    <Compile Include="AssetStudioCore\StreamExtensions.cs" />
-    <Compile Include="AssetStudioCore\Texture2DConverter.cs" />
     <Compile Include="CubismModel3Json.cs" />
     <Compile Include="CubismMotion3Converter.cs" />
     <Compile Include="CubismMotion3Json.cs" />
@@ -96,10 +57,14 @@
     <Compile Include="MyJsonConverter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Texture2DConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Libraries\AssetStudio.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

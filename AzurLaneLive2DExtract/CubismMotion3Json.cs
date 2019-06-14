@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace AssetStudioCore
+namespace AzurLaneLive2DExtract
 {
     public class CubismMotion3Json
     {
